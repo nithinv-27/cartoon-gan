@@ -67,29 +67,28 @@ class Generator(nn.Module):
 
       return x
 
-if __name__=='__main__':
-    if(len(sys.argv) < 2):
-        print("Usage: make transform IMAGE=PATH_TO_IMAGE_FILENAME")
-        exit(0)
-    if not (os.path.isfile(sys.argv[1])):
-        print("{} is not a file".format(sys.argv[1]))
-        exit(0)
-    if not (os.path.isfile('generator_release.pth')):
-        print('Can not find pre-trained weights file generator_release.pth. Please provide within current directory.')
-        exit(0)
-    checkpoint = torch.load('./generator_release.pth', map_location='cpu')
-    G = Generator().to('cpu')
-    G.load_state_dict(checkpoint['g_state_dict'])
-    transformer = transforms.Compose([
-        transforms.CenterCrop(256),
-        transforms.ToTensor()
-        ])
 
-    with Image.open(sys.argv[1]) as img:
-        # The input is needed as a batch, I got the solution from here:
-        # https://discuss.pytorch.org/t/pytorch-1-0-how-to-predict-single-images-mnist-example/32394
-        pseudo_batched_img = transformer(img)
-        pseudo_batched_img = pseudo_batched_img[None]
-        result = G(pseudo_batched_img)
-        result = transforms.ToPILImage()(result[0]).convert('RGB')
-        result.save('transformed.'+img.format)
+checkpoint = torch.load('./generator_release.pth', map_location='cpu')
+G = Generator().to('cpu')
+G.load_state_dict(checkpoint['g_state_dict'])
+transformer = transforms.Compose([
+    transforms.CenterCrop(256),
+    transforms.ToTensor()
+    ])
+
+def img_path(image):
+  pil_img=Image.fromarray(image)
+# with Image.open(pil_img,'r') as img:
+  
+  # The input is needed as a batch, I got the solution from here:
+  # https://discuss.pytorch.org/t/pytorch-1-0-how-to-predict-single-images-mnist-example/32394
+  pseudo_batched_img = transformer(pil_img)
+  pseudo_batched_img = pseudo_batched_img[None]
+  result = G(pseudo_batched_img)
+  result = transforms.ToPILImage()(result[0]).convert('RGB')
+  # result.save('transformed.'+img.format)
+  return result
+
+# fin_result=img_path('Johnny-Depp-Gellert-Grindelwald-Casting.jpg')
+# fin_result.show()
+
