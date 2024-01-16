@@ -6,6 +6,12 @@ import sys
 import os.path
 from PIL import Image
 from torchvision import transforms
+import numpy as np
+
+if torch.cuda.is_available():
+  device=torch.device('cuda')
+else:
+  device=torch.device('cpu')
 
 class ResidualBlock(nn.Module):
   def __init__(self):
@@ -69,7 +75,7 @@ class Generator(nn.Module):
 
 
 checkpoint = torch.load('./generator_release.pth', map_location='cpu')
-G = Generator().to('cpu')
+G = Generator().to(device)
 G.load_state_dict(checkpoint['g_state_dict'])
 transformer = transforms.Compose([
     transforms.CenterCrop(256),
@@ -83,11 +89,20 @@ def img_path(image):
   # The input is needed as a batch, I got the solution from here:
   # https://discuss.pytorch.org/t/pytorch-1-0-how-to-predict-single-images-mnist-example/32394
   pseudo_batched_img = transformer(pil_img)
+  pseudo_batched_img = pseudo_batched_img.to(device)
   pseudo_batched_img = pseudo_batched_img[None]
   result = G(pseudo_batched_img)
   result = transforms.ToPILImage()(result[0]).convert('RGB')
   # result.save('transformed.'+img.format)
   return result
+
+# test_img_path='00000000.jpg'
+# with Image.open(test_img_path,'r') as img:
+#   test_img=img.convert("RGB")
+
+# test_img = np.array(test_img, np.uint8)
+
+# img_path(test_img)
 
 # fin_result=img_path('Johnny-Depp-Gellert-Grindelwald-Casting.jpg')
 # fin_result.show()
